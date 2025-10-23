@@ -23,7 +23,7 @@ export default function AuthDialog() {
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [activeTab, setActiveTab] = useState("login")
-  const [role, setRole] = useState<"student" | "admin">("student")
+  const [signupRole, setSignupRole] = useState<"student" | "admin">("student")
   const { login, signup } = useAuth()
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -34,7 +34,7 @@ export default function AuthDialog() {
     const email = formData.get("email") as string
     const password = formData.get("password") as string
 
-    const success = await login(email, password, role)
+    const success = await login(email, password)
 
     if (success) {
       setIsOpen(false)
@@ -53,8 +53,9 @@ export default function AuthDialog() {
     const email = formData.get("email") as string
     const password = formData.get("password") as string
     const name = formData.get("name") as string
+    const department = formData.get("department") as string
 
-    const success = await signup(email, password, name, role)
+    const success = await signup(email, password, name, signupRole, department)
 
     if (success) {
       setIsOpen(false)
@@ -78,19 +79,6 @@ export default function AuthDialog() {
           <DialogTitle>Welcome to R&D Center</DialogTitle>
           <DialogDescription>Sign in to your account or create a new one to get started.</DialogDescription>
         </DialogHeader>
-
-        <div className="mb-4">
-          <Label htmlFor="role-select">I am a:</Label>
-          <Select value={role} onValueChange={(value: "student" | "admin") => setRole(value)}>
-            <SelectTrigger className="mt-2">
-              <SelectValue placeholder="Select your role" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="student">Student</SelectItem>
-              <SelectItem value="admin">Admin</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-2">
@@ -117,12 +105,28 @@ export default function AuthDialog() {
           <TabsContent value="signup">
             <form onSubmit={handleSignup} className="space-y-4">
               <div className="space-y-2">
+                <Label htmlFor="signup-role">I am a:</Label>
+                <Select value={signupRole} onValueChange={(value: "student" | "admin") => setSignupRole(value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select your role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="student">Student</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="signup-name">Full Name</Label>
                 <Input id="signup-name" name="name" type="text" placeholder="Enter your full name" required />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="signup-email">Email</Label>
                 <Input id="signup-email" name="email" type="email" placeholder="Enter your email" required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="signup-department">Department (Optional)</Label>
+                <Input id="signup-department" name="department" type="text" placeholder="e.g., Computer Science" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="signup-password">Password</Label>

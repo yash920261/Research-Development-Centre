@@ -353,5 +353,45 @@ export const forumService = {
       console.error('Error filtering topics by category:', error)
       return { data: null, error }
     }
+  },
+
+  /**
+   * Delete a topic (admin only)
+   */
+  async deleteTopic(topicId: string): Promise<{ error: any }> {
+    try {
+      // First delete all replies associated with this topic
+      const { error: repliesError } = await supabase
+        .from('forum_replies')
+        .delete()
+        .eq('topic_id', topicId)
+
+      if (repliesError) {
+        console.error('Error deleting replies:', repliesError)
+        return { error: repliesError }
+      }
+
+      // Delete all likes associated with this topic
+      const { error: likesError } = await supabase
+        .from('forum_likes')
+        .delete()
+        .eq('topic_id', topicId)
+
+      if (likesError) {
+        console.error('Error deleting likes:', likesError)
+        return { error: likesError }
+      }
+
+      // Finally delete the topic itself
+      const { error } = await supabase
+        .from('forum_topics')
+        .delete()
+        .eq('id', topicId)
+
+      return { error }
+    } catch (error) {
+      console.error('Error deleting topic:', error)
+      return { error }
+    }
   }
 }

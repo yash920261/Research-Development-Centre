@@ -2,39 +2,86 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { MessageSquare, ThumbsUp } from "lucide-react"
+import { MessageSquare, ThumbsUp, Trash2 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { forumService } from "@/lib/services/forum.service"
 import type { ForumTopic } from "@/types/database.types"
+import { useAuth } from "@/contexts/auth-context"
+import { toast } from "sonner"
 
 interface ForumTopicListProps {
   sortBy?: "recent" | "popular"
   searchQuery?: string
+  onTopicDeleted?: () => void
 }
 
-export default function ForumTopicList({ sortBy = "recent", searchQuery = "" }: ForumTopicListProps) {
+export default function ForumTopicList({ sortBy = "recent", searchQuery = "", onTopicDeleted }: ForumTopicListProps) {
+  const { user } = useAuth()
   const [topics, setTopics] = useState<ForumTopic[]>([])
   const [loading, setLoading] = useState(true)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [topicToDelete, setTopicToDelete] = useState<ForumTopic | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
-    async function loadTopics() {
-      setLoading(true)
-      const { data, error } = await forumService.getAllTopics()
-      
-      if (error) {
-        console.error('Error loading topics:', error)
-        setTopics([])
-      } else {
-        setTopics(data || [])
-      }
-      
-      setLoading(false)
-    }
-
     loadTopics()
   }, [])
+
+  async function loadTopics() {
+    setLoading(true)
+    const { data, error } = await forumService.getAllTopics()
+    
+    if (error) {
+      console.error('Error loading topics:', error)
+      setTopics([])
+    } else {
+      setTopics(data || [])
+    }
+    
+    setLoading(false)
+  }
+
+  const handleDeleteClick = (e: React.MouseEvent, topic: ForumTopic) => {
+    e.preventDefault() // Prevent navigation to topic
+    e.stopPropagation()
+    setTopicToDelete(topic)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!topicToDelete) return
+
+    setIsDeleting(true)
+    const { error } = await forumService.deleteTopic(topicToDelete.id)
+
+    if (error) {
+      console.error('Error deleting topic:', error)
+      toast.error('Failed to delete discussion')
+    } else {
+      toast.success('Discussion deleted successfully')
+      // Reload topics
+      await loadTopics()
+      // Notify parent component if callback provided
+      onTopicDeleted?.()
+    }
+
+    setIsDeleting(false)
+    setDeleteDialogOpen(false)
+    setTopicToDelete(null)
+  }
 
   let filteredTopics = topics
 
@@ -75,25 +122,38 @@ export default function ForumTopicList({ sortBy = "recent", searchQuery = "" }: 
   }
 
   return (
-    <div className="space-y-4">
-      {sortedTopics.map((topic) => (
-        <Link href={`/forum/topic/${topic.id}`} key={topic.id}>
-          <Card className="hover:bg-muted/50 transition-colors">
-            <CardContent className="p-6 my-0">
-              <div className="flex flex-col space-y-4">
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1 flex-1">
-                    <h3 className="font-semibold text-lg">{topic.title}</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {topic.tags.map((tag) => (
-                        <Badge key={tag} variant="outline" className="bg-amber-50 text-background">
-                          {tag}
-                        </Badge>
-                      ))}
+    <>
+      <div className="space-y-4">
+        {sortedTopics.map((topic) => (
+          <Link href={`/forum/topic/${topic.id}`} key={topic.id}>
+            <Card className="hover:bg-muted/50 transition-colors">
+              <CardContent className="p-6 my-0">
+                <div className="flex flex-col space-y-4">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1 flex-1">
+                      <h3 className="font-semibold text-lg">{topic.title}</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {topic.tags.map((tag) => (
+                          <Badge key={tag} variant="outline" className="bg-amber-50 text-background">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge>{topic.category}</Badge>
+                      {user?.role === 'admin' && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={(e) => handleDeleteClick(e, topic)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
-                  <Badge>{topic.category}</Badge>
-                </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <Avatar className="h-8 w-8">
@@ -122,8 +182,30 @@ export default function ForumTopicList({ sortBy = "recent", searchQuery = "" }: 
               </div>
             </CardContent>
           </Card>
-        </Link>
-      ))}
-    </div>
+          </Link>
+        ))}
+      </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Discussion</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{topicToDelete?.title}"? This action cannot be undone and will also delete all replies to this discussion.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }

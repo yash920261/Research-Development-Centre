@@ -247,7 +247,6 @@ const initialFacultyData = [
 export default function FacultyPage() {
   const { user } = useAuth()
   const [facultyList, setFacultyList] = useState<Faculty[]>([])
-  const [isLoaded, setIsLoaded] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
   // Load faculty from Supabase on component mount
@@ -271,7 +270,6 @@ export default function FacultyPage() {
       console.error('Error loading faculty:', error)
       toast.error('Failed to load faculty members')
     } finally {
-      setIsLoaded(true)
       setIsLoading(false)
     }
   }
@@ -290,7 +288,7 @@ export default function FacultyPage() {
     setFacultyList(prev => prev.filter(faculty => faculty.id !== facultyId))
   }
 
-  if (!isLoaded || isLoading) {
+  if (isLoading) {
     return (
       <div className="container py-10">
         <div className="flex items-center justify-center">

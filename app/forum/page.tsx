@@ -27,6 +27,10 @@ export default function ForumPage() {
     setRefreshKey((prev) => prev + 1)
   }
 
+  const handleTopicDeleted = () => {
+    setRefreshKey((prev) => prev + 1)
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -113,10 +117,10 @@ export default function ForumPage() {
                 </TabsList>
               </div>
               <TabsContent value="recent" className="pt-6" key={`recent-${refreshKey}`}>
-                <ForumTopicList sortBy="recent" searchQuery={searchQuery} />
+                <ForumTopicList sortBy="recent" searchQuery={searchQuery} onTopicDeleted={handleTopicDeleted} />
               </TabsContent>
               <TabsContent value="popular" className="pt-6" key={`popular-${refreshKey}`}>
-                <ForumTopicList sortBy="popular" searchQuery={searchQuery} />
+                <ForumTopicList sortBy="popular" searchQuery={searchQuery} onTopicDeleted={handleTopicDeleted} />
               </TabsContent>
               <TabsContent value="categories" className="pt-6" key={`categories-${refreshKey}`}>
                 <ForumCategoryList />

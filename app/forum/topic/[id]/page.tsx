@@ -2,13 +2,24 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { ArrowLeft, MessageSquare, Share2, ThumbsUp } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { ArrowLeft, MessageSquare, Share2, ThumbsUp, Trash2 } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import ForumReplyForm from "@/components/forum-reply-form"
 import { forumService } from "@/lib/services/forum.service"
 import type { ForumTopic, ForumReply } from "@/types/database.types"
@@ -20,12 +31,15 @@ interface TopicPageProps {
 }
 
 export default function TopicPage({ params }: TopicPageProps) {
+  const router = useRouter()
   const { user } = useAuth()
   const [topic, setTopic] = useState<ForumTopic | null>(null)
   const [replies, setReplies] = useState<ForumReply[]>([])
   const [isLiked, setIsLiked] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
     async function loadTopic() {
@@ -84,6 +98,23 @@ export default function TopicPage({ params }: TopicPageProps) {
     setRefreshKey((prev) => prev + 1)
   }
 
+  const handleDeleteTopic = async () => {
+    if (!topic) return
+
+    setIsDeleting(true)
+    const { error } = await forumService.deleteTopic(topic.id)
+
+    if (error) {
+      console.error('Error deleting topic:', error)
+      toast.error('Failed to delete discussion')
+      setIsDeleting(false)
+    } else {
+      toast.success('Discussion deleted successfully')
+      // Redirect to forum page after successful deletion
+      router.push('/forum')
+    }
+  }
+
   if (loading) {
     return (
       <div className="container py-10">
@@ -110,15 +141,27 @@ export default function TopicPage({ params }: TopicPageProps) {
       </div>
 
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">{topic.title}</h1>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {topic.tags.map((tag: string) => (
-              <Badge key={tag} variant="outline" className="bg-amber-50 text-background">
-                {tag}
-              </Badge>
-            ))}
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold">{topic.title}</h1>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {topic.tags.map((tag: string) => (
+                <Badge key={tag} variant="outline" className="bg-amber-50 text-background">
+                  {tag}
+                </Badge>
+              ))}
+            </div>
           </div>
+          {user?.role === 'admin' && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setDeleteDialogOpen(true)}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete Discussion
+            </Button>
+          )}
         </div>
 
         <Card>
@@ -210,6 +253,27 @@ export default function TopicPage({ params }: TopicPageProps) {
           <ForumReplyForm topicId={params.id} onSuccess={handleReplySuccess} />
         </div>
       </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Discussion</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this discussion? This action cannot be undone and will also delete all {replies.length} {replies.length === 1 ? 'reply' : 'replies'} to this discussion.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteTopic}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
