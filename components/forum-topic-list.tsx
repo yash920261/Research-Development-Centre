@@ -31,27 +31,33 @@ interface ForumTopicListProps {
 export default function ForumTopicList({ sortBy = "recent", searchQuery = "", onTopicDeleted }: ForumTopicListProps) {
   const { user } = useAuth()
   const [topics, setTopics] = useState<ForumTopic[]>([])
-  const [loading, setLoading] = useState(true)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [topicToDelete, setTopicToDelete] = useState<ForumTopic | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    loadTopics()
+    setMounted(true)
   }, [])
 
+  useEffect(() => {
+    if (!mounted) return
+    loadTopics()
+  }, [mounted])
+
   async function loadTopics() {
-    setLoading(true)
+    console.log('🔍 [ForumTopicList] Fetching topics...')
     const { data, error } = await forumService.getAllTopics()
+    console.log('📊 [ForumTopicList] Data received:', data)
+    console.log('❌ [ForumTopicList] Error:', error)
     
     if (error) {
       console.error('Error loading topics:', error)
       setTopics([])
     } else {
+      console.log('✅ [ForumTopicList] Setting topics:', data || [])
       setTopics(data || [])
     }
-    
-    setLoading(false)
   }
 
   const handleDeleteClick = (e: React.MouseEvent, topic: ForumTopic) => {
@@ -104,14 +110,6 @@ export default function ForumTopicList({ sortBy = "recent", searchQuery = "", on
     // For "recent", compare dates
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   })
-
-  if (loading) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-muted-foreground">Loading discussions...</p>
-      </div>
-    )
-  }
 
   if (sortedTopics.length === 0) {
     return (

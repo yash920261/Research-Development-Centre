@@ -62,14 +62,12 @@ export default function ProjectSubmissionForm() {
         // More detailed error message
         const errorMessage = error.message || error.toString() || 'Unknown error'
         toast.error(`Failed to submit: ${errorMessage}`)
-        setIsLoading(false)
         return
       }
 
       if (!data) {
         console.error('⚠️ No data returned but no error either')
         toast.error('Submission may have failed - please check Supabase')
-        setIsLoading(false)
         return
       }
 
@@ -81,13 +79,16 @@ export default function ProjectSubmissionForm() {
       console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
       toast.error(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
+      // ALWAYS stop loading, no matter what
+      console.log('🏁 Setting isLoading to false')
       setIsLoading(false)
-      console.log('🏁 Submission process completed')
     }
   }
 
   const resetForm = () => {
+    console.log('🔄 Resetting form...')
     setSubmitted(false)
+    setIsLoading(false)  // Make sure loading is false
     setFormData({
       name: "",
       email: "",
@@ -96,6 +97,7 @@ export default function ProjectSubmissionForm() {
       projectDescription: "",
       resources: "",
     })
+    console.log('✅ Form reset complete')
   }
 
   if (submitted) {

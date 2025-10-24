@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import ForumTopicList from "@/components/forum-topic-list"
-import ForumCategoryList from "@/components/forum-category-list"
 import NewDiscussionForm from "@/components/new-discussion-form"
 import { initializeForumData } from "@/lib/forum-data"
 import { useAuth } from "@/contexts/auth-context"
@@ -113,7 +112,6 @@ export default function ForumPage() {
                 <TabsList>
                   <TabsTrigger value="recent">Recent Discussions</TabsTrigger>
                   <TabsTrigger value="popular">Popular</TabsTrigger>
-                  <TabsTrigger value="categories">Categories</TabsTrigger>
                 </TabsList>
               </div>
               <TabsContent value="recent" className="pt-6" key={`recent-${refreshKey}`}>
@@ -121,9 +119,6 @@ export default function ForumPage() {
               </TabsContent>
               <TabsContent value="popular" className="pt-6" key={`popular-${refreshKey}`}>
                 <ForumTopicList sortBy="popular" searchQuery={searchQuery} onTopicDeleted={handleTopicDeleted} />
-              </TabsContent>
-              <TabsContent value="categories" className="pt-6" key={`categories-${refreshKey}`}>
-                <ForumCategoryList />
               </TabsContent>
             </Tabs>
           </div>

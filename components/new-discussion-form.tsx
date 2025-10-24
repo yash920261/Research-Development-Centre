@@ -55,6 +55,8 @@ export default function NewDiscussionForm({ open, onOpenChange, onSuccess }: New
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
+    
+    console.log('📝 Form submitted')
 
     if (!title.trim()) {
       setError("Please enter a title")
@@ -84,8 +86,12 @@ export default function NewDiscussionForm({ open, onOpenChange, onSuccess }: New
 
     setIsSubmitting(true)
 
+    console.log('🚀 Starting discussion creation...')
+    console.log('📋 Form data:', { title, category, tags: selectedTags })
+    console.log('👤 User:', { id: user.id, name: user.name })
+
     try {
-      const { data, error: submitError } = await forumService.createTopic({
+      const topicData = {
         title,
         content,
         author_id: user.id,
@@ -94,16 +100,23 @@ export default function NewDiscussionForm({ open, onOpenChange, onSuccess }: New
         author_department: user.department || "Unknown Department",
         category,
         tags: selectedTags,
-      })
+      }
+
+      console.log('📤 Sending to Supabase:', topicData)
+
+      const { data, error: submitError } = await forumService.createTopic(topicData)
+
+      console.log('📥 Supabase response:', { data, error: submitError })
 
       if (submitError) {
-        console.error('Error creating topic:', submitError)
+        console.error('❌ Error creating topic:', submitError)
+        console.error('Error details:', JSON.stringify(submitError, null, 2))
         setError("Failed to create discussion. Please try again.")
-        toast.error("Failed to create discussion")
-        setIsSubmitting(false)
+        toast.error(`Failed to create discussion: ${submitError.message || 'Unknown error'}`)
         return
       }
 
+      console.log('✅ Discussion created successfully!', data)
       toast.success("Discussion created successfully!")
       
       // Reset form
@@ -111,13 +124,17 @@ export default function NewDiscussionForm({ open, onOpenChange, onSuccess }: New
       setContent("")
       setCategory("")
       setSelectedTags([])
+      setError("")
       onOpenChange(false)
       onSuccess?.()
     } catch (err) {
-      console.error('Error creating discussion:', err)
+      console.error('💥 Exception caught:', err)
+      console.error('Error stack:', err instanceof Error ? err.stack : 'No stack trace')
       setError("Failed to create discussion. Please try again.")
-      toast.error("Failed to create discussion")
+      toast.error(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`)
     } finally {
+      // ALWAYS stop loading, no matter what
+      console.log('🏁 Setting isSubmitting to false')
       setIsSubmitting(false)
     }
   }

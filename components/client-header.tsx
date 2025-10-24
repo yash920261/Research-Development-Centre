@@ -1,9 +1,10 @@
 "use client"
 
 import Link from "next/link"
-import { Beaker, BarChart3 } from "lucide-react"
+import { Beaker, BarChart3, FileText } from "lucide-react"
 import AuthDialog from "@/components/auth-dialog"
 import UserMenu from "@/components/user-menu"
+import { Skeleton } from "@/components/ui/skeleton"
 import { useAuth } from "@/contexts/auth-context"
 
 export default function ClientHeader() {
@@ -54,16 +55,35 @@ export default function ClientHeader() {
           >
             Contact
           </Link>
-          {user?.role === 'admin' && (
-            <Link
-              href="/admin/analytics"
-              className="text-sm font-medium hover:text-amber-400 transition-colors text-muted-foreground flex items-center gap-1"
-            >
-              <BarChart3 className="h-4 w-4" />
-              Analytics
-            </Link>
+          {isLoading ? (
+            // Show skeleton during initial load
+            <>
+              <Skeleton className="h-4 w-16 bg-amber-500/10" />
+              <Skeleton className="h-9 w-28 bg-amber-500/10" />
+            </>
+          ) : (
+            <>
+              {user?.role === 'admin' && (
+                <>
+                  <Link
+                    href="/admin/analytics"
+                    className="text-sm font-medium hover:text-amber-400 transition-colors text-muted-foreground flex items-center gap-1"
+                  >
+                    <BarChart3 className="h-4 w-4" />
+                    Analytics
+                  </Link>
+                  <Link
+                    href="/admin/projects"
+                    className="text-sm font-medium hover:text-amber-400 transition-colors text-muted-foreground flex items-center gap-1"
+                  >
+                    <FileText className="h-4 w-4" />
+                    Submissions
+                  </Link>
+                </>
+              )}
+              {user ? <UserMenu /> : <AuthDialog />}
+            </>
           )}
-          {!isLoading && <>{user ? <UserMenu /> : <AuthDialog />}</>}
         </nav>
       </div>
     </header>

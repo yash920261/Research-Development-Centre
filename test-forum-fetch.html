@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Forum Data Fetch</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .container {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        h1 { color: #fbbf24; }
+        h2 { color: #f59e0b; margin-top: 20px; }
+        pre {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .success { color: #10b981; }
+        .error { color: #ef4444; }
+        button {
+            background: #fbbf24;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #f59e0b;
+        }
+        .topic-card {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            border-left: 4px solid #fbbf24;
+        }
+        .loading { color: #60a5fa; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Forum Data Fetch Tester</h1>
+        <p>This page tests the direct connection to Supabase and forum data fetching.</p>
+        
+        <h2>Step 1: Environment Variables</h2>
+        <div id="env-check">Checking...</div>
+        
+        <h2>Step 2: Fetch Forum Topics</h2>
+        <button onclick="fetchForumTopics()">🚀 Fetch Topics</button>
+        <div id="fetch-result"></div>
+        
+        <h2>Step 3: Display Topics</h2>
+        <div id="topics-display"></div>
+    </div>
+
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+        
+        // REPLACE THESE WITH YOUR ACTUAL VALUES
+        const SUPABASE_URL = 'https://tvbgytfvkayvghomzuzb.supabase.co'
+        const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY_HERE' // Get this from .env.local or Supabase dashboard
+        
+        const envCheck = document.getElementById('env-check')
+        
+        if (!SUPABASE_URL || SUPABASE_URL === 'YOUR_SUPABASE_URL_HERE') {
+            envCheck.innerHTML = '<span class="error">❌ Supabase URL not configured</span>'
+        } else if (!SUPABASE_ANON_KEY || SUPABASE_ANON_KEY === 'YOUR_ANON_KEY_HERE') {
+            envCheck.innerHTML = `
+                <span class="error">❌ Supabase Anon Key not configured</span>
+                <p>Get your anon key from: <a href="https://tvbgytfvkayvghomzuzb.supabase.co/project/_/settings/api" target="_blank">Supabase API Settings</a></p>
+            `
+        } else {
+            envCheck.innerHTML = '<span class="success">✅ Environment variables configured</span>'
+        }
+        
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+        
+        window.fetchForumTopics = async function() {
+            const resultDiv = document.getElementById('fetch-result')
+            const displayDiv = document.getElementById('topics-display')
+            
+            resultDiv.innerHTML = '<p class="loading">⏳ Fetching topics...</p>'
+            displayDiv.innerHTML = ''
+            
+            try {
+                console.log('🔍 Fetching forum topics...')
+                
+                const { data, error } = await supabase
+                    .from('forum_topics')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                
+                console.log('📊 Data:', data)
+                console.log('❌ Error:', error)
+                
+                if (error) {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ Error fetching topics:</p>
+                        <pre>${JSON.stringify(error, null, 2)}</pre>
+                    `
+                    return
+                }
+                
+                if (!data || data.length === 0) {
+                    resultDiv.innerHTML = '<p class="error">⚠️ No topics found in database</p>'
+                    return
+                }
+                
+                resultDiv.innerHTML = `
+                    <p class="success">✅ Successfully fetched ${data.length} topics!</p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `
+                
+                // Display topics
+                displayDiv.innerHTML = data.map(topic => `
+                    <div class="topic-card">
+                        <h3>${topic.title}</h3>
+                        <p><strong>Author:</strong> ${topic.author_name} (${topic.author_department})</p>
+                        <p><strong>Category:</strong> ${topic.category}</p>
+                        <p><strong>Views:</strong> ${topic.views} | <strong>Likes:</strong> ${topic.likes}</p>
+                        <p><strong>Created:</strong> ${new Date(topic.created_at).toLocaleString()}</p>
+                        <p>${topic.content.substring(0, 200)}...</p>
+                    </div>
+                `).join('')
+                
+            } catch (err) {
+                console.error('Exception:', err)
+                resultDiv.innerHTML = `
+                    <p class="error">❌ Exception occurred:</p>
+                    <pre>${err.message}\n${err.stack}</pre>
+                `
+            }
+        }
+        
+        // Auto-run if keys are configured
+        if (SUPABASE_ANON_KEY && SUPABASE_ANON_KEY !== 'YOUR_ANON_KEY_HERE') {
+            setTimeout(() => window.fetchForumTopics(), 1000)
+        }
+    </script>
+</body>
+</html>

@@ -14,19 +14,30 @@ import { Badge } from "@/components/ui/badge"
 
 export default function Home() {
   const [forumTopics, setForumTopics] = useState<ForumTopic[]>([])
-  const [loadingTopics, setLoadingTopics] = useState(true)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted) return
+    
     async function loadForumTopics() {
+      console.log('🔍 Fetching forum topics...')
       const { data, error } = await forumService.getAllTopics()
+      console.log('📊 Forum data:', data)
+      console.log('❌ Forum error:', error)
       if (!error && data) {
         // Get the 3 most recent topics
+        console.log('✅ Setting forum topics:', data.slice(0, 3))
         setForumTopics(data.slice(0, 3))
+      } else {
+        console.error('Failed to load forum topics:', error)
       }
-      setLoadingTopics(false)
     }
     loadForumTopics()
-  }, [])
+  }, [mounted])
   return (
     <div className="flex flex-col min-h-screen bg-gradient-dark">
       <ClientHeader />
@@ -221,19 +232,7 @@ export default function Home() {
               </p>
             </div>
             <div className="mx-auto grid max-w-5xl items-center gap-6 lg:grid-cols-3">
-              {loadingTopics ? (
-                // Loading state
-                [1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className="flex flex-col overflow-hidden rounded-lg border border-amber-500/20 bg-card p-6 animate-pulse"
-                  >
-                    <div className="h-4 bg-amber-500/20 rounded w-3/4 mb-4"></div>
-                    <div className="h-3 bg-amber-500/10 rounded w-full mb-2"></div>
-                    <div className="h-3 bg-amber-500/10 rounded w-2/3"></div>
-                  </div>
-                ))
-              ) : forumTopics.length > 0 ? (
+              {forumTopics.length > 0 ? (
                 // Real forum topics from database
                 forumTopics.map((topic) => (
                   <Link href={`/forum/topic/${topic.id}`} key={topic.id}>

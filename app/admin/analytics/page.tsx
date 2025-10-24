@@ -118,7 +118,7 @@ const mockAnalyticsData = {
 const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#00ff00', '#ff0000', '#0088FE', '#00C49F']
 
 export default function FacultyAnalyticsPage() {
-  const { user } = useAuth()
+  const { user, isLoading: authLoading } = useAuth()
   const [timeRange, setTimeRange] = useState("7d")
   const [loading, setLoading] = useState(true)
   
@@ -128,7 +128,7 @@ export default function FacultyAnalyticsPage() {
   const [departmentStats, setDepartmentStats] = useState<DepartmentStats[]>([])
   const [contactStats, setContactStats] = useState({ total: 0, unread: 0 })
   
-  // Load analytics data
+  // Load analytics data only after auth is loaded and user is admin
   useEffect(() => {
     async function loadAnalytics() {
       setLoading(true)
@@ -148,18 +148,31 @@ export default function FacultyAnalyticsPage() {
       setLoading(false)
     }
     
-    if (user?.role === 'admin') {
+    if (!authLoading && user?.role === 'admin') {
       loadAnalytics()
     }
-  }, [user])
+  }, [authLoading, user])
 
-  // Redirect if not admin
+  // Redirect if not admin (only after auth is loaded)
   useEffect(() => {
-    if (user && user.role !== "admin") {
+    if (!authLoading && user && user.role !== "admin") {
       window.location.href = "/"
     }
-  }, [user])
+  }, [authLoading, user])
 
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show access denied only after auth is loaded
   if (!user || user.role !== "admin") {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -176,21 +189,31 @@ export default function FacultyAnalyticsPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="sticky top-0 z-50 w-full border-b border-amber-500/20 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center">
           <div className="flex items-center gap-2 font-bold">
-            <Beaker className="h-5 w-5" />
-            <span>Admin Dashboard</span>
+            <div className="p-1.5 rounded-lg bg-amber-500/20 border border-amber-500/30">
+              <Beaker className="h-5 w-5 text-amber-400" />
+            </div>
+            <span className="bg-gradient-to-r from-amber-400 to-amber-200 bg-clip-text text-transparent">
+              Admin Dashboard
+            </span>
           </div>
           <nav className="ml-auto flex gap-4 sm:gap-6">
-            <Link href="/faculty" className="text-sm font-medium hover:underline underline-offset-4">
-              Faculty
+            <Link href="/" className="text-sm font-medium hover:text-amber-400 transition-colors text-muted-foreground">
+              Home
             </Link>
             <Link
               href="/admin/analytics"
-              className="text-sm font-medium hover:underline underline-offset-4 text-amber-600"
+              className="text-sm font-medium text-amber-400"
             >
               Analytics
+            </Link>
+            <Link
+              href="/admin/projects"
+              className="text-sm font-medium hover:text-amber-400 transition-colors text-muted-foreground"
+            >
+              Submissions
             </Link>
           </nav>
         </div>
@@ -201,15 +224,15 @@ export default function FacultyAnalyticsPage() {
           <div className="container px-4 md:px-6">
             <div className="flex flex-col space-y-4">
               <div className="flex items-center space-x-2">
-                <Link href="/faculty" className="flex items-center text-sm text-muted-foreground hover:text-foreground">
+                <Link href="/faculty" className="flex items-center text-sm text-gray-600 hover:text-gray-900">
                   <ArrowLeft className="mr-1 h-4 w-4" />
                   Back to Faculty
                 </Link>
               </div>
               <div className="flex items-center justify-between">
                 <div>
-                  <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl">Faculty Analytics</h1>
-                  <p className="max-w-[700px] text-muted-foreground md:text-xl">
+                  <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl text-gray-900">Faculty Analytics</h1>
+                  <p className="max-w-[700px] text-gray-600 md:text-xl">
                     Monitor faculty profile performance and engagement metrics.
                   </p>
                 </div>

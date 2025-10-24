@@ -24,22 +24,27 @@ export default function AuthDialog() {
   const [isLoading, setIsLoading] = useState(false)
   const [activeTab, setActiveTab] = useState("login")
   const [signupRole, setSignupRole] = useState<"student" | "admin">("student")
+  const [error, setError] = useState<string | null>(null)
   const { login, signup } = useAuth()
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
+    setError(null)
 
     const formData = new FormData(e.currentTarget)
     const email = formData.get("email") as string
     const password = formData.get("password") as string
 
+    console.log('🔐 Attempting login...')
     const success = await login(email, password)
 
     if (success) {
+      console.log('✅ Login successful')
       setIsOpen(false)
     } else {
-      alert("Login failed. Please check your credentials.")
+      console.log('❌ Login failed')
+      setError("Login failed. Please check your credentials and ensure you have confirmed your email.")
     }
 
     setIsLoading(false)
@@ -48,6 +53,7 @@ export default function AuthDialog() {
   const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
+    setError(null)
 
     const formData = new FormData(e.currentTarget)
     const email = formData.get("email") as string
@@ -55,12 +61,16 @@ export default function AuthDialog() {
     const name = formData.get("name") as string
     const department = formData.get("department") as string
 
+    console.log('📝 Attempting signup with:', { email, name, role: signupRole, department })
     const success = await signup(email, password, name, signupRole, department)
 
     if (success) {
+      console.log('✅ Signup successful')
       setIsOpen(false)
+      alert('Account created successfully! Please check your email to confirm your account. After confirmation, you can log in.')
     } else {
-      alert("Signup failed. Please try again.")
+      console.log('❌ Signup failed')
+      setError("Signup failed. Please check your information and try again. If the problem persists, contact support.")
     }
 
     setIsLoading(false)
@@ -88,6 +98,11 @@ export default function AuthDialog() {
 
           <TabsContent value="login">
             <form onSubmit={handleLogin} className="space-y-4">
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                  {error}
+                </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="login-email">Email</Label>
                 <Input id="login-email" name="email" type="email" placeholder="Enter your email" required />
@@ -104,6 +119,11 @@ export default function AuthDialog() {
 
           <TabsContent value="signup">
             <form onSubmit={handleSignup} className="space-y-4">
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">
+                  {error}
+                </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="signup-role">I am a:</Label>
                 <Select value={signupRole} onValueChange={(value: "student" | "admin") => setSignupRole(value)}>
@@ -130,7 +150,7 @@ export default function AuthDialog() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="signup-password">Password</Label>
-                <Input id="signup-password" name="password" type="password" placeholder="Create a password" required />
+                <Input id="signup-password" name="password" type="password" placeholder="Create a password (min 6 characters)" required minLength={6} />
               </div>
               <Button type="submit" className="w-full" disabled={isLoading}>
                 <UserPlus className="h-4 w-4 mr-2" />

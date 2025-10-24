@@ -51,14 +51,12 @@ export default function ContactForm() {
         console.error('❌ Error submitting contact message:', error)
         const errorMessage = error.message || error.toString() || 'Unknown error'
         toast.error(`Failed to send message: ${errorMessage}`)
-        setIsLoading(false)
         return
       }
 
       if (!data) {
         console.error('⚠️ No data returned but no error either')
         toast.error('Message may not have been sent - please try again')
-        setIsLoading(false)
         return
       }
 
@@ -69,19 +67,23 @@ export default function ContactForm() {
       console.error('💥 Exception caught:', error)
       toast.error(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
+      // ALWAYS stop loading, no matter what
+      console.log('🏁 Setting isLoading to false')
       setIsLoading(false)
-      console.log('🏁 Submission process completed')
     }
   }
 
   const resetForm = () => {
+    console.log('🔄 Resetting form...')
     setSubmitted(false)
+    setIsLoading(false)  // Make sure loading is false
     setFormData({
       name: "",
       email: "",
       inquiryType: "",
       message: "",
     })
+    console.log('✅ Form reset complete')
   }
 
   if (submitted) {
