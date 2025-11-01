@@ -84,6 +84,12 @@ export default function NewDiscussionForm({ open, onOpenChange, onSuccess }: New
       return
     }
 
+    // Prevent double submission
+    if (isSubmitting) {
+      console.log('⚠️ Already submitting, ignoring duplicate request')
+      return
+    }
+
     setIsSubmitting(true)
 
     console.log('🚀 Starting discussion creation...')

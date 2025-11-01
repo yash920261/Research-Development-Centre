@@ -32,6 +32,13 @@ export default function ContactForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Prevent double submission
+    if (isLoading) {
+      console.log('⚠️ Already submitting, ignoring duplicate request')
+      return
+    }
+    
     setIsLoading(true)
 
     console.log('🚀 Starting contact form submission...')
