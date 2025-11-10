@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { ArrowLeft, Beaker, BarChart3 } from 'lucide-react'
+import { ArrowLeft, Beaker, BarChart3, RefreshCw } from 'lucide-react'
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,265 +13,44 @@ import { useAuth } from "@/contexts/auth-context"
 import { facultyService, type Faculty } from "@/lib/services/faculty.service"
 import { toast } from "sonner"
 
-const initialFacultyData = [
-  {
-    id: "1",
-    name: "Dr. Rajesh Kumar",
-    title: "Director, R&D Center",
-    department: "Computer Science",
-    image: "/placeholder.svg?height=300&width=300",
-    email: "rajesh.kumar@manavrachna.edu.in",
-    phone: "+91-9876543210",
-    office: "Block A, Room 301",
-    specialization: ["Artificial Intelligence", "Machine Learning", "Data Science"],
-    experience: "15+ years",
-    education: "Ph.D. in Computer Science, IIT Delhi",
-    researchInterests: ["AI in Healthcare", "Natural Language Processing", "Computer Vision"],
-    publications: "50+ research papers",
-    projects: ["Smart Healthcare System", "AI-powered Education Platform"],
-    webProfile: {
-      personalStatement:
-        "I am passionate about advancing the field of artificial intelligence through innovative research and mentoring the next generation of researchers. My work focuses on creating AI systems that are not only powerful but also ethical and explainable.",
-      website: "https://rajeshkumar.manavrachna.edu.in",
-      biography:
-        "With 15+ years in academia and research, I have dedicated my career to pushing the boundaries of artificial intelligence. My journey began with a fascination for solving complex problems, which led me to pursue advanced degrees and eventually join the R&D center at Manav Rachna University.",
-      teachingPhilosophy:
-        "I believe in hands-on learning and encourage students to think critically about real-world applications of AI. My approach combines theoretical foundations with practical experience, preparing students for both academic and industry careers.",
-      achievements: [
-        "Published 5 papers in top-tier AI journals this year",
-        "Received research grant of ₹50 lakhs for healthcare AI project",
-        "Mentored 8 students who won national AI competitions",
-      ],
-      collaborationInterests:
-        "I'm actively seeking collaborations in interdisciplinary research projects, particularly those that combine AI with healthcare, education, and sustainable technologies. Open to both academic partnerships and industry collaborations.",
-    },
-    analytics: {
-      profileViews: 892,
-      contactClicks: 45,
-      projectViews: 234,
-      lastUpdated: "2025-01-20T10:30:00Z",
-    },
-  },
-  {
-    id: "2",
-    name: "Dr. Priya Sharma",
-    title: "Associate Professor",
-    department: "Electronics & Communication",
-    image: "/placeholder.svg?height=300&width=300",
-    email: "priya.sharma@manavrachna.edu.in",
-    phone: "+91-9876543211",
-    office: "Block B, Room 205",
-    specialization: ["IoT Systems", "Embedded Systems", "Wireless Communication"],
-    experience: "12+ years",
-    education: "Ph.D. in Electronics Engineering, IIT Bombay",
-    researchInterests: ["Smart Cities", "Industrial IoT", "5G Networks"],
-    publications: "35+ research papers",
-    projects: ["Smart Campus Initiative", "Industrial Automation System"],
-    webProfile: {
-      personalStatement:
-        "My research interests lie in the development of IoT systems and wireless communication technologies. I am committed to creating solutions that enhance connectivity and efficiency in urban environments.",
-      website: "https://priyasharma.manavrachna.edu.in",
-      biography:
-        "With over a decade of experience in electronics engineering, I have contributed significantly to the advancement of IoT and wireless communication technologies. My work has been recognized through numerous publications and industry awards.",
-      teachingPhilosophy:
-        "I focus on fostering a collaborative learning environment where students can explore cutting-edge technologies and develop practical skills. My teaching approach emphasizes innovation and problem-solving.",
-      achievements: [
-        "Led the development of a smart city project that won the Smart India Hackathon",
-        "Published 10 papers on IoT and wireless communication",
-        "Received a gold medal for excellence in research",
-      ],
-      collaborationInterests:
-        "I am open to collaborations that aim to improve urban infrastructure and enhance communication networks. Academic and industry partnerships are welcome.",
-    },
-    analytics: {
-      profileViews: 567,
-      contactClicks: 32,
-      projectViews: 189,
-      lastUpdated: "2025-01-19T14:20:00Z",
-    },
-  },
-  {
-    id: "3",
-    name: "Dr. Amit Verma",
-    title: "Professor",
-    department: "Mechanical Engineering",
-    image: "/placeholder.svg?height=300&width=300",
-    email: "amit.verma@manavrachna.edu.in",
-    phone: "+91-9876543212",
-    office: "Block C, Room 102",
-    specialization: ["Renewable Energy", "Thermal Engineering", "Sustainable Design"],
-    experience: "18+ years",
-    education: "Ph.D. in Mechanical Engineering, IIT Kanpur",
-    researchInterests: ["Solar Energy Systems", "Green Manufacturing", "Energy Efficiency"],
-    publications: "60+ research papers",
-    projects: ["Solar Power Optimization", "Green Building Design"],
-    webProfile: {
-      personalStatement:
-        "I am dedicated to sustainable design and renewable energy solutions. My research aims to reduce environmental impact and improve energy efficiency in various applications.",
-      website: "https://amitverma.manavrachna.edu.in",
-      biography:
-        "With 18 years of experience in mechanical engineering, I have been at the forefront of renewable energy and sustainable design research. My work has been instrumental in developing innovative solutions for energy optimization.",
-      teachingPhilosophy:
-        "My teaching philosophy is centered around sustainability and innovation. I encourage students to think creatively and develop solutions that address real-world challenges.",
-      achievements: [
-        "Published 20 papers on renewable energy and sustainable design",
-        "Received a grant of ₹1 crore for a green manufacturing project",
-        "Awarded the Best Researcher in Sustainable Design",
-      ],
-      collaborationInterests:
-        "I am interested in collaborations that focus on renewable energy sources and sustainable manufacturing practices. Both academic and industry partnerships are welcome.",
-    },
-    analytics: {
-      profileViews: 423,
-      contactClicks: 28,
-      projectViews: 156,
-      lastUpdated: "2025-01-18T09:15:00Z",
-    },
-  },
-  {
-    id: "4",
-    name: "Dr. Neha Gupta",
-    title: "Assistant Professor",
-    department: "Biotechnology",
-    image: "/placeholder.svg?height=300&width=300",
-    email: "neha.gupta@manavrachna.edu.in",
-    phone: "+91-9876543213",
-    office: "Block D, Room 401",
-    specialization: ["Genetic Engineering", "Bioinformatics", "Molecular Biology"],
-    experience: "8+ years",
-    education: "Ph.D. in Biotechnology, JNU Delhi",
-    researchInterests: ["Gene Therapy", "Personalized Medicine", "Biomarker Discovery"],
-    publications: "25+ research papers",
-    projects: ["Cancer Biomarker Research", "Gene Editing Applications"],
-    webProfile: {
-      personalStatement:
-        "My research focuses on genetic engineering and personalized medicine. I am passionate about developing treatments that are tailored to individual patient needs.",
-      website: "https://nehagupta.manavrachna.edu.in",
-      biography:
-        "With 8 years of experience in biotechnology, I have made significant contributions to the fields of genetic engineering and personalized medicine. My work has been recognized through several research grants and publications.",
-      teachingPhilosophy:
-        "I believe in a student-centered approach to teaching biotechnology. My goal is to inspire students to pursue careers in research and innovation.",
-      achievements: [
-        "Published 15 papers on genetic engineering and personalized medicine",
-        "Received a grant of ₹20 lakhs for a gene therapy project",
-        "Mentored 5 students who won national biotechnology competitions",
-      ],
-      collaborationInterests:
-        "I am interested in collaborations that aim to advance genetic engineering and personalized medicine. Academic and industry partnerships are welcome.",
-    },
-    analytics: {
-      profileViews: 389,
-      contactClicks: 24,
-      projectViews: 134,
-      lastUpdated: "2025-01-17T16:45:00Z",
-    },
-  },
-  {
-    id: "5",
-    name: "Dr. Suresh Patel",
-    title: "Associate Professor",
-    department: "Civil Engineering",
-    image: "/placeholder.svg?height=300&width=300",
-    email: "suresh.patel@manavrachna.edu.in",
-    phone: "+91-9876543214",
-    office: "Block E, Room 303",
-    specialization: ["Structural Engineering", "Smart Materials", "Earthquake Engineering"],
-    experience: "14+ years",
-    education: "Ph.D. in Civil Engineering, IIT Roorkee",
-    researchInterests: ["Seismic Design", "Infrastructure Resilience", "Sustainable Construction"],
-    publications: "40+ research papers",
-    projects: ["Earthquake-Resistant Buildings", "Smart Infrastructure Monitoring"],
-    webProfile: {
-      personalStatement:
-        "My research is dedicated to improving the resilience of infrastructure and developing smart materials for sustainable construction. I am committed to creating safer and more efficient buildings.",
-      website: "https://sureshpatel.manavrachna.edu.in",
-      biography:
-        "With 14 years of experience in civil engineering, I have focused on structural engineering and sustainable construction. My work has been recognized through numerous publications and awards.",
-      teachingPhilosophy:
-        "I believe in a hands-on approach to teaching civil engineering, emphasizing practical applications and problem-solving skills.",
-      achievements: [
-        "Published 12 papers on structural engineering and smart materials",
-        "Received a grant of ₹30 lakhs for a sustainable construction project",
-        "Awarded the Best Civil Engineer in India",
-      ],
-      collaborationInterests:
-        "I am open to collaborations that aim to enhance infrastructure resilience and promote sustainable construction practices. Academic and industry partnerships are welcome.",
-    },
-    analytics: {
-      profileViews: 312,
-      contactClicks: 18,
-      projectViews: 98,
-      lastUpdated: "2025-01-16T11:30:00Z",
-    },
-  },
-  {
-    id: "6",
-    name: "Dr. Kavita Singh",
-    title: "Professor",
-    department: "Chemistry",
-    image: "/placeholder.svg?height=300&width=300",
-    email: "kavita.singh@manavrachna.edu.in",
-    phone: "+91-9876543215",
-    office: "Block F, Room 201",
-    specialization: ["Organic Chemistry", "Drug Discovery", "Green Chemistry"],
-    experience: "16+ years",
-    education: "Ph.D. in Chemistry, University of Delhi",
-    researchInterests: ["Pharmaceutical Chemistry", "Environmental Chemistry", "Catalysis"],
-    publications: "55+ research papers",
-    projects: ["Novel Drug Synthesis", "Green Catalytic Processes"],
-    webProfile: {
-      personalStatement:
-        "I am dedicated to drug discovery and green chemistry. My research aims to develop new drugs and sustainable chemical processes that benefit society.",
-      website: "https://kavitasingh.manavrachna.edu.in",
-      biography:
-        "With 16 years of experience in chemistry, I have made significant contributions to drug discovery and green chemistry. My work has been recognized through numerous research grants and publications.",
-      teachingPhilosophy:
-        "My teaching philosophy is centered around innovation and sustainability. I encourage students to think creatively and develop solutions that address real-world challenges.",
-      achievements: [
-        "Published 18 papers on drug discovery and green chemistry",
-        "Received a grant of ₹40 lakhs for a drug discovery project",
-        "Awarded the Best Chemist in India",
-      ],
-      collaborationInterests:
-        "I am interested in collaborations that focus on drug discovery and sustainable chemical processes. Both academic and industry partnerships are welcome.",
-    },
-    analytics: {
-      profileViews: 264,
-      contactClicks: 9,
-      projectViews: 87,
-      lastUpdated: "2025-01-15T13:20:00Z",
-    },
-  },
-]
-
 export default function FacultyPage() {
   const { user } = useAuth()
   const [facultyList, setFacultyList] = useState<Faculty[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [retryCount, setRetryCount] = useState(0)
 
   // Load faculty from Supabase on component mount
   useEffect(() => {
     loadFaculty()
-  }, [])
+  }, [retryCount])
 
   const loadFaculty = async () => {
     setIsLoading(true)
+    setError(null)
     try {
+      console.log('🔍 Fetching faculty data...')
       const { data, error } = await facultyService.getAll()
       
       if (error) {
         console.error('Error loading faculty:', error)
+        setError('Failed to load faculty members. Please try again.')
         toast.error('Failed to load faculty members')
-        setFacultyList([])
       } else {
+        console.log('✅ Faculty data loaded:', data?.length || 0, 'records')
         setFacultyList(data || [])
       }
     } catch (error) {
       console.error('Error loading faculty:', error)
+      setError('Failed to load faculty members. Please try again.')
       toast.error('Failed to load faculty members')
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleRetry = () => {
+    setRetryCount(prev => prev + 1)
   }
 
   const handleAddFaculty = (newFaculty: Faculty) => {
@@ -286,18 +65,6 @@ export default function FacultyPage() {
 
   const handleDeleteFaculty = (facultyId: string) => {
     setFacultyList(prev => prev.filter(faculty => faculty.id !== facultyId))
-  }
-
-  if (isLoading) {
-    return (
-      <div className="container py-10">
-        <div className="flex items-center justify-center">
-          <div className="text-center">
-            <div className="text-lg">Loading faculty members...</div>
-          </div>
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -390,32 +157,71 @@ export default function FacultyPage() {
 
         <section className="w-full py-12">
           <div className="container px-4 md:px-6">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {facultyList.map((faculty) => {
-                // Map database structure to component props
-                const facultyProps = {
-                  ...faculty,
-                  researchInterests: faculty.research_interests,
-                  webProfile: {
-                    personalStatement: faculty.web_profile?.personal_statement || undefined,
-                    website: faculty.web_profile?.website || undefined,
-                    biography: faculty.web_profile?.biography || undefined,
-                    teachingPhilosophy: faculty.web_profile?.teaching_philosophy || undefined,
-                    achievements: faculty.web_profile?.achievements || [],
-                    collaborationInterests: faculty.web_profile?.collaboration_interests || undefined,
-                  },
-                  analytics: {
-                    profileViews: faculty.analytics?.profile_views || 0,
-                    contactClicks: faculty.analytics?.contact_clicks || 0,
-                    projectViews: faculty.analytics?.project_views || 0,
-                    lastUpdated: faculty.analytics?.last_updated || new Date().toISOString(),
+            {/* Show loading indicator inline instead of blocking the whole page */}
+            {isLoading && (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-amber-500 mb-4"></div>
+                  <p className="text-lg">Loading faculty members...</p>
+                </div>
+              </div>
+            )}
+
+            {/* Show error message with retry option */}
+            {error && !isLoading && (
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="text-center max-w-md">
+                  <div className="text-red-500 mb-4">
+                    <p className="text-lg font-medium">Unable to load faculty members</p>
+                    <p className="text-muted-foreground mt-2">{error}</p>
+                  </div>
+                  <Button onClick={handleRetry} className="mt-4">
+                    <RefreshCw className={`mr-2 h-4 w-4 ${retryCount > 0 ? 'animate-spin' : ''}`} />
+                    Try Again
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Show faculty grid when data is loaded and no error */}
+            {!isLoading && !error && (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {facultyList.map((faculty) => {
+                  // Map database structure to component props
+                  const facultyProps = {
+                    ...faculty,
+                    researchInterests: faculty.research_interests,
+                    webProfile: {
+                      personalStatement: faculty.web_profile?.personal_statement || undefined,
+                      website: faculty.web_profile?.website || undefined,
+                      biography: faculty.web_profile?.biography || undefined,
+                      teachingPhilosophy: faculty.web_profile?.teaching_philosophy || undefined,
+                      achievements: faculty.web_profile?.achievements || [],
+                      collaborationInterests: faculty.web_profile?.collaboration_interests || undefined,
+                    },
+                    analytics: {
+                      profileViews: faculty.analytics?.profile_views || 0,
+                      contactClicks: faculty.analytics?.contact_clicks || 0,
+                      projectViews: faculty.analytics?.project_views || 0,
+                      lastUpdated: faculty.analytics?.last_updated || new Date().toISOString(),
+                    }
                   }
-                }
-                return (
-                  <FacultyCard key={faculty.id} {...facultyProps} onEdit={handleEditFaculty} onDelete={handleDeleteFaculty} />
-                )
-              })}
-            </div>
+                  return (
+                    <FacultyCard key={faculty.id} {...facultyProps} onEdit={handleEditFaculty} onDelete={handleDeleteFaculty} />
+                  )
+                })}
+              </div>
+            )}
+
+            {/* Show empty state when no faculty and no errors */}
+            {!isLoading && !error && facultyList.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="text-center">
+                  <p className="text-lg text-muted-foreground">No faculty members found</p>
+                  <p className="text-muted-foreground mt-2">Check back later for updates</p>
+                </div>
+              </div>
+            )}
           </div>
         </section>
 
